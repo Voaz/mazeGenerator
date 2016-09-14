@@ -1,72 +1,32 @@
 //
 // Copyright (c) 2016 by Voaz Charov. All Rights Reserved.
 //
-
-#include <iostream>
 #include <stdlib.h>
 #include <time.h>
-#include <random>
-#include <chrono>
-#include <utility>
+#include <iostream>
 #include <vector>
 #include <map>
-#include <string>
+#include <fstream>
 
 #include "json/value.h"
+#include "Cell.h"
 
-class Cell {
-public:
-  Cell() { id = 0;}
-  void setID(int id);
-  int getID();
-  void setRightBorder() { right = 1; }
-  int getBottom() { return bottom; }
-  std::string toMJson() {
-    return "[" + std::to_string(right) + ", " + std::to_string(bottom) + "]";
-  }
-  void setParams(Cell& cell) {
-    if (cell.getBottom() != 1) {
-      id = cell.getID();
-    }
-  }
-  std::string toString() {
-    std::string ret = std::to_string(id);
+ #define LGEN_DEBUG
 
-    if (bottom == 1) {
-      ret += "_";
-    }
-    if (right == 1) {
-      ret += "|";
-    } else {
-      ret += " ";
-    }
-    return ret;
-  }
-  void setBottomBorder() { bottom = 1; }
-private:
-  int id;
-  int top;
-  int right;
-  int left;
-  int bottom;
-};
-
-void Cell::setID(int id) {
-  this->id = id;
-}
-int Cell::getID() {
-  return id;
-}
 int getRandomNumber(int start, int end) {
-  // std::default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
+  // std::default_random_engine
+  // generator(std::chrono::system_clock::now().time_since_epoch().count());
   // std::uniform_int_distribution<int> distribution(start, end);
   // return distribution(generator);
   return rand() % (end - start) + start;
 }
 
-std::pair<int, int> nextStep() {}
+Cell **generatePaths(int w, int h) {
+  Cell **field = new Cell*[w];
+  for (size_t i = 0; i < w; i++) {
+    field[i] = new Cell[h];
+  }
 
-Cell **generatePaths(Cell **field, int w, int h) {
   std::map<int, int> groups;
 
   for (size_t j = 0; j < w; j++) {
@@ -103,40 +63,40 @@ Cell **generatePaths(Cell **field, int w, int h) {
         field[j][i].setBottomBorder();
       }
     }
-
+#ifdef LGEN_DEBUG
     // fiveth step
     for (size_t i = 0; i < h; i++) {
       std::cout << field[j][i].toString();
     }
     std::cout << "\n";
+#endif
     groups.clear();
     if (j + 1 < w) {
       for (size_t i = 0; i < h; i++) {
         field[j+1][i].setParams(field[j][i]);
       }
     }
-
   }
+  return field;
 }
 
 void convertToJson(Cell **field, int w, int h) {
   Json::Value root;
 
-  //root["maze"] = "test";
   root["width"] = w;
   root["height"] = h;
+
   for (size_t i = 0; i < w; i++) {
     for (size_t j = 0; j < h; j++) {
-      std::cout << "test" << i << std::endl;
-      root["Cells"][std::to_string(i)][std::to_string(j)].append(Json::arrayValue())
-        field[i][j].toMJson();
-      //root["2"]["bottom"] = 1;
+      root["Cells"][std::to_string(i)][std::to_string(j)].
+        append(field[i][j].getRight());
+      root["Cells"][std::to_string(i)][std::to_string(j)].
+        append(field[i][j].getBottom());
     }
-
   }
-
-
-  std::cout << "\n" << root.toStyledString() << "\n";
+  std::ofstream fjson(std::to_string(time(nullptr)) + ".json");
+  fjson << root.toStyledString();
+  fjson.close();
 }
 
 int main(int argc, char const *argv[]) {
@@ -152,14 +112,11 @@ int main(int argc, char const *argv[]) {
   std::cin >> player_pos_w;
   std::cin >> player_pos_h;
 
-  Cell **field = new Cell*[lab_width];
-  for (size_t i = 0; i < lab_width; i++) {
-    field[i] = new Cell[lab_height];
-  }
-
-  generatePaths(field, lab_width, lab_height);
+  Cell **field = generatePaths(lab_width, lab_height);
 
   convertToJson(field, lab_width, lab_height);
+
+  delete []field;
 
   return 0;
 }
