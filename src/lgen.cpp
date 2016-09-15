@@ -86,12 +86,15 @@ void convertToJson(Cell **field, int w, int h) {
   root["width"] = w;
   root["height"] = h;
 
-  for (size_t i = 0; i < w; i++) {
+  for (size_t i = 0, k = 0; i < w; i++) {
     for (size_t j = 0; j < h; j++) {
-      root["Cells"][std::to_string(i)][std::to_string(j)].
-        append(field[i][j].getRight());
-      root["Cells"][std::to_string(i)][std::to_string(j)].
-        append(field[i][j].getBottom());
+      Json::Value temp;
+      temp["id"] = k;
+      temp["right"] =  field[i][j].getRight();
+      temp["bottom"] = field[i][j].getBottom();
+      root["Cells"].append(temp);
+      temp.clear();
+      k++;
     }
   }
   std::ofstream fjson(std::to_string(time(nullptr)) + ".json");
