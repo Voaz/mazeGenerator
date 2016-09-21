@@ -11,7 +11,7 @@
 #include "json/value.h"
 #include "Cell.h"
 
- #define LGEN_DEBUG
+#define LGEN_DEBUG
 
 int getRandomNumber(int start, int end) {
   // std::default_random_engine
@@ -27,16 +27,22 @@ Cell **generatePaths(int w, int h) {
     field[i] = new Cell[h];
   }
 
-  std::map<int, int> groups;
+  std::map<int, std::map<int, int>> groups;
 
   for (size_t j = 0; j < w; j++) {
     groups.clear();
     // second step
     for (size_t i = 0; i < h; i++) {
-      if (field[j][i].getID() == 0) {
-        field[j][i].setID(i+1);
+      if (i > 0) {
+        if (field[j][i].getID() < field[j][i-1].getID()) {
+          field[j][i].setID(i+1);
+        }
+      } else {
+        if (field[j][i].getID() == 0) {
+          field[j][i].setID(i+1);
+        }
       }
-      groups[field[j][i].getID()]++;
+      groups[field[j][i].getID()].insert(std::make_pair(i, 0));
     }
     // third step
     for (size_t i = 0; i < h; i++) {
@@ -47,8 +53,13 @@ Cell **generatePaths(int w, int h) {
           if (field[j][i].getID() == field[j][i+1].getID()) {
             field[j][i].setRightBorder();
             field[j][i+1].setID(i+2);
-            groups[field[j][i].getID()]--;
-            groups[field[j][i+1].getID()]++;
+            groups[field[j][i].getID()].erase(
+                                      groups[field[j][i].getID()].find(i));
+
+            if (groups[field[j][i+1].getID()].find(i+1)->second != 0) {
+              groups[field[j][i+1].getID()][i+1]++;
+            }
+            groups[field[j][i+1].getID()].insert(std::make_pair(i+1, 0));
           } else {
             groups[field[j][i+1].getID()]--;
             field[j][i+1].setID(field[j][i].getID());
