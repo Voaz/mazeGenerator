@@ -1,55 +1,29 @@
 //
 // Copyright (c) 2016 by Voaz Charov. All Rights Reserved.
 //
-#include <stdlib.h>
-#include <time.h>
-#include <iostream>
-#include <vector>
-#include <map>
-#include <fstream>
-#include <algorithm>
-#include "json/value.h"
-#include "Cell.h"
+#include "Maze.h"
+#include "Group.h"
 
-#define LGEN_DEBUG
-
-int getRandomNumber(int start, int end) {
-  // std::default_random_engine
-  // generator(std::chrono::system_clock::now().time_since_epoch().count());
-  // std::uniform_int_distribution<int> distribution(start, end);
-  // return distribution(generator);
-  return rand() % (end - start) + start;
+Maze::Maze(int width, int height) {
+  field = new Cell*[width];
+  for (size_t i = 0; i < width; i++) {
+    field[i] = new Cell[height];
+  }
 }
 
-void showGroups(const std::map<int, int> map) {
-  std::cout << "groups" << std::endl;
-  for (auto it : map) {
-    std::cout << it.first << " ";
-  }
-  std::cout << std::endl;
-  for (auto it : map) {
-    std::cout << it.second << " ";
-  }
-  std::cout << std::endl << std::endl;
-}
+void Maze::CreateMaze() {
+  Group *groups = new Group(width);
+  for (size_t i = 0; i < width; i++) {
+    groups->clear();
 
-void showGroups(const std::map<int, std::vector<int>> map) {
-  std::cout << "groups" << std::endl;
-  for (auto it : map) {
-    std::cout << it.first;
-    for (size_t i = 0; i < it.second.size(); i++) {
-      std::cout << " ";
+    for (size_t j = 0; j < height; j++) {
+      if (field[i][j].getID() == 0) {
+        field[i][j].setID(j+1);
+      }
+
+      groups->addIndex(field[j][i].getID(), i);
     }
-    std::cout << "|";
   }
-  std::cout << std::endl;
-  for (auto it : map) {
-    for (size_t i = 0; i < it.second.size(); i++) {
-      std::cout << it.second[i] << " ";
-    }
-    std::cout << "|";
-  }
-  std::cout << std::endl << std::endl;
 }
 
 Cell **generatePaths(int w, int h) {
@@ -146,48 +120,4 @@ Cell **generatePaths(int w, int h) {
     }
   }
   return field;
-}
-
-void convertToJson(Cell **field, int w, int h) {
-  Json::Value root;
-
-  root["width"] = w;
-  root["height"] = h;
-
-  for (size_t i = 0, k = 0; i < w; i++) {
-    for (size_t j = 0; j < h; j++) {
-      Json::Value temp;
-      temp["id"] = k;
-      temp["right"] =  field[i][j].getRight();
-      temp["bottom"] = field[i][j].getBottom();
-      root["Cells"].append(temp);
-      temp.clear();
-      k++;
-    }
-  }
-  std::ofstream fjson(std::to_string(time(nullptr)) + ".json");
-  fjson << root.toStyledString();
-  fjson.close();
-}
-
-int main(int argc, char const *argv[]) {
-  srand(time(NULL));
-
-  int lab_width;
-  int lab_height;
-  int player_pos_w;
-  int player_pos_h;
-
-  std::cin >> lab_width;
-  std::cin >> lab_height;
-  std::cin >> player_pos_w;
-  std::cin >> player_pos_h;
-
-  Cell **field = generatePaths(lab_width, lab_height);
-
-  convertToJson(field, lab_width, lab_height);
-
-  delete []field;
-
-  return 0;
 }
