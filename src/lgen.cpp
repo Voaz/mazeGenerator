@@ -8,7 +8,7 @@
 #include <map>
 #include <fstream>
 #include <algorithm>
-#include "json/value.h"
+#include "json/json.h"
 #include "Cell.h"
 
 #define LGEN_DEBUG
